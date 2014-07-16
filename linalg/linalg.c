@@ -35,8 +35,9 @@ jit_function_t build_dot_product(jit_context_t context) {
     y = jit_value_get_param(F, 2);
 
     // i is a temporary int, z is a temporary double
-    jit_value_t i, z, xi, yi, tmp1, tmp2;
-    i = jit_value_create(F, jit_type_int);
+    jit_value_t i, z, xi, yi, tmp, tmp1, tmp2;
+    tmp = jit_value_create(F, jit_type_nint);
+    i = jit_value_create(F, jit_type_nint);
     z = jit_value_create(F, jit_type_float64);
     xi = jit_value_create(F, jit_type_float64);
     yi = jit_value_create(F, jit_type_float64);
@@ -69,7 +70,8 @@ jit_function_t build_dot_product(jit_context_t context) {
     jit_insn_store(F, z, tmp2);
 
     // Increment i
-    i = jit_insn_add(F, i, one);
+    tmp = jit_insn_add(F, i, one);
+    jit_insn_store(F, i, tmp);
 
     // Branch
     jit_insn_branch(F, &label_for);
