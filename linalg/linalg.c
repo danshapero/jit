@@ -16,7 +16,7 @@ jit_function_t build_dot_product(jit_context_t context) {
     jit_context_build_start(context);
 
     // Create function signature
-    jit_type_t params[] = { jit_type_nint,
+    jit_type_t params[3] = { jit_type_nint,
                             jit_type_void_ptr,
                             jit_type_void_ptr };
 
@@ -80,6 +80,7 @@ jit_function_t build_dot_product(jit_context_t context) {
     // Return z
     jit_insn_return(F, z);
 
+    jit_function_compile(F);
     jit_context_build_end(context);
     return F;
 }
