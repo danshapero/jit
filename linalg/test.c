@@ -6,6 +6,8 @@ int main(int argc, char **argv) {
     double x[10], y[10];
 
     dot_product dp = NULL;
+
+    // Evaluate the dot product of x, y using a native function
     dp = native_dot_product;
 
     for (i = 0; i < 10; i++) {
@@ -18,10 +20,23 @@ int main(int argc, char **argv) {
 
 
     jit_context_t context = jit_context_create();
-    jit_function_t jitdp = build_dot_product(context);
 
-    dot_product jdp = jit_function_to_closure(jitdp);
-    z = jdp(10, x, y);
+
+    // Now evaluate the dot product using a JIT function
+    jit_function_t jitdp = build_dot_product(context);
+    dot_product jit_dot_product = jit_function_to_closure(jitdp);
+
+    dp = jit_dot_product;
+    z = dp(10, x, y);
+    printf("%g\n", z);
+
+
+    // Now evaluate the dot product using an unrolled JIT function
+    jit_function_t u_jitdp = build_unrolled_dot_product(context, 2);
+    dot_product u_jit_dot_product = jit_function_to_closure(u_jitdp);
+
+    dp = u_jit_dot_product;
+    z = dp(10, x, y);
     printf("%g\n", z);
 
     jit_context_destroy(context);
