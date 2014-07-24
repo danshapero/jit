@@ -53,6 +53,10 @@ void initSparseMatrix(SparseMatrix *A, int m, int n, Graph *g) {
     }
 
     free(neighbors);
+
+    /* Make the matrix-vector multiply implementation point to a CSR matvec
+       algorithm */
+    A->matvec = native_csr_matvec;
 }
 
 
@@ -97,7 +101,12 @@ int getRowSize(SparseMatrix* A, int i) {
 }
 
 
-void matvec(SparseMatrix *A, double *x, double *y) {
+void sparseMatrixVectorMultiply(SparseMatrix *A, double *x, double *y) {
+    A->matvec(A, x, y);
+}
+
+
+void native_csr_matvec(SparseMatrix *A, double *x, double *y) {
     int i, j, k;
     double z;
 

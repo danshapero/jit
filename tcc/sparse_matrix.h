@@ -1,11 +1,13 @@
 #include "graph.h"
 
-
-typedef struct {
+struct SparseMatrix_t {
     int m, n, nnz;
     int *ptr, *node;
     double *val;
-} SparseMatrix;
+    void (*matvec) (struct SparseMatrix_t *A, double *x, double *y);
+};
+
+typedef struct SparseMatrix_t SparseMatrix;
 
 void initSparseMatrix(SparseMatrix *A, int m, int n, Graph *g);
 void destroySparseMatrix(SparseMatrix *A);
@@ -16,4 +18,5 @@ void addValue(SparseMatrix *A, int i, int j, double z);
 double getValue(SparseMatrix *A, int i, int j);
 int getRowSize(SparseMatrix *A, int i);
 
-void matvec(SparseMatrix *A, double *x, double *y);
+void sparseMatrixVectorMultiply(SparseMatrix *A, double *x, double *y);
+void native_csr_matvec(SparseMatrix *A, double *x, double *y);

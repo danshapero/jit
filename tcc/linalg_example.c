@@ -69,7 +69,7 @@ int main(int arg, char **argv) {
         y[i] = 1.0;
     }
 
-    matvec(A, x, y);
+    sparseMatrixVectorMultiply(A, x, y);
 
     for (i = 0; i < nn; i++) {
         if (y[i] != 0.0) printf("%d %g\n", i, y[i]);
