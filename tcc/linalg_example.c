@@ -32,6 +32,11 @@ int main(int arg, char **argv) {
         }
     }
 
+    printf("Done building Erdos-Renyi graph.\n");
+    printf("    Vertices:   %d\n", nn);
+    printf("    Edges:      %d\n", g->ne);
+    printf("    Max degree: %d\n", getMaxDegree(g));
+
 
     /* Build a matrix on the graph `g` */
     SparseMatrix *A;
@@ -59,6 +64,9 @@ int main(int arg, char **argv) {
 
     free(neighbors);
 
+    printf("\n");
+    printf("Constructing graph Laplacian.\n");
+
 
     /* Make some vectors and multiply them by `A` */
     double *x, *y;
@@ -69,12 +77,53 @@ int main(int arg, char **argv) {
         y[i] = 1.0;
     }
 
+    printf("Multiplying graph Laplacian by constant vector 1.\n");
     sparseMatrixVectorMultiply(A, x, y);
 
     for (i = 0; i < nn; i++) {
-        if (y[i] != 0.0) printf("%d %g\n", i, y[i]);
+        if (y[i] != 0.0) {
+            printf("%d %g\n", i, y[i]);
+            return 1;
+        }
     }
 
+    printf("Matrix-vector multiplication gave correct result of 0.\n\n");
+
+
+    printf("JIT compiling the matrix-vector multiplication kernel:\n");
+    Matvec mv;
+    mv = jitCompileMatvec();
+    printf("Done JIT compiling matvec kernel!\n");
+
+    printf("Location in memory of native matvec:       %d\n", 
+                                                (int)(&native_csr_matvec));
+    printf("Location in memory of JIT matvec:          %d\n", (int)mv);
+
+
+    printf("Changing A's implementation of matvec to point to \n");
+    printf("    the JIT-compiled matvec.\n");
+    A->matvec = mv;
+    printf("New location of A's matvec implementation: %d\n",
+                                                (int)A->matvec);
+
+    for (i = 0; i < nn; i++) {
+        x[i] = 1.0;
+        y[i] = 1.0;
+    }
+
+    printf("\n");
+    printf("Multiplying graph Laplacian by constant vector \n");
+    printf("    using JIT-compiled matvec.\n");
+    sparseMatrixVectorMultiply(A, x, y);
+
+    for (i = 0; i < nn; i++) {
+        if (y[i] != 0.0) {
+            printf("%d %g\n", i, y[i]);
+            return 1;
+        }
+    }
+
+    printf("JIT-compiled matvec gave correct result of 0! Wahoo!\n");
 
     /* Free up the memory used */
     destroyGraph(g);
