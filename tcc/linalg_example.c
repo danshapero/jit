@@ -1,4 +1,6 @@
-#include "sparse_matrix.h"
+//#include "sparse_matrix.h"
+#include "jit_sparse_matrix_kernels.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
