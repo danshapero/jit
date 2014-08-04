@@ -20,4 +20,4 @@ double blockSparseMatGetValue(BlockSparseMatrix *A, int i, int j);
 int blockSparseMatGetRowSize(BlockSparseMatrix *A, int i);
 
 void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y);
-void native_block_sparse_matvec(BlockSparseMatrix *A, double *x, double *y);
+void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y);

@@ -97,6 +97,8 @@ void blockify(BlockSparseMatrix *A, SparseMatrix *B, int mc, int nc) {
         }
     }
 
+    A->matvec = native_bcsr_matvec;
+
     /* Free some memory */
     free(neighbors);
     destroyGraph(g);
@@ -183,6 +185,8 @@ void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y)
 void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {
     int I, J, K, i, j, k, l, M, N, index;
     double z;
+
+    for (i = 0; i < A->m; i++) y[i] = 0.0;
 
     M = A->m / A->mc;
     for (I = 0; I < M; I++) {

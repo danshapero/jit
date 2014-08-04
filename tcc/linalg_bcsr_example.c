@@ -79,6 +79,29 @@ int main(int arg, char **argv) {
     printf("Blockifying sparse matrix.\n");
 
 
+    /* Make some vectors and multiply them by `A` */
+    double *x, *y;
+    x = (double *) malloc( nn * sizeof(double) );
+    y = (double *) malloc( nn * sizeof(double) );
+    for (i = 0; i < nn; i++) {
+        x[i] = 1.0;
+        y[i] = 1.0;
+    }
+
+
+    printf("Multiplying blockified graph Laplacian by constant vector 1.\n");
+    blockSparseMatrixVectorMultiply(A, x, y);
+
+    for (i = 0; i < nn; i++) {
+        if (y[i] != 0.0) {
+            printf("%d %g\n", i, y[i]);
+            return 1;
+        }
+    }
+
+    printf("Done!\n");
+
+
 
     destroyGraph(g);
     free(g);
