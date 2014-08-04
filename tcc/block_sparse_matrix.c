@@ -1,6 +1,7 @@
 #include "block_sparse_matrix.h"
 #include <stdlib.h>
 
+
 void blockify(BlockSparseMatrix *A, SparseMatrix *B, int mc, int nc) {
     /* Set the global dimensions of the block sparse matrix */
     A->m = B->m;
@@ -21,10 +22,10 @@ void blockify(BlockSparseMatrix *A, SparseMatrix *B, int mc, int nc) {
     initGraph(g, M, N);
 
     int d, i, j, k, l, I, J, K, index;
-    for (i = 0; i < A->m; i++) {
+    for (i = 0; i < B->m; i++) {
         I = i / mc;
-        for (k = A->ptr[i]; A->ptr[i + 1]; i++) {
-            j = A->node[k];
+        for (k = B->ptr[i]; k < B->ptr[i + 1]; k++) {
+            j = B->node[k];
             J = j / nc;
             addEdge(g, I, J);
         }
