@@ -1,4 +1,4 @@
-#include "jit_sparse_matrix_kernels.h"
+#include "sparse_matrix.h"
 #include "libtcc.h"
 
 #include <stdlib.h>
