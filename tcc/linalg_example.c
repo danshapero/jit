@@ -98,7 +98,7 @@ int main(int arg, char **argv) {
     printf("Done JIT compiling matvec kernel!\n");
 
     printf("Location in memory of native matvec:       %d\n", 
-                                                (int)(&native_csr_matvec));
+                                            (int)(&native_csr_matvec));
     printf("Location in memory of JIT matvec:          %d\n", (int)mv);
 
 

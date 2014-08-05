@@ -1,11 +1,10 @@
 
-//#include "jit_block_sparse_matrix_kernels.h"
-#include "block_sparse_matrix.h"
-
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
+
+#include "jit_block_sparse_matrix_kernels.h"
 
 
 
@@ -99,10 +98,46 @@ int main(int arg, char **argv) {
         }
     }
 
-    printf("Done!\n");
+    printf("Block matrix multiplication gave correct result of 0.\n");
 
 
+    printf("JIT compiling the block matrix-vector multiplication kernel:\n");
+    BlockMatvec mv;
+    mv = jitCompileBlockMatvec(8, 8);
+    printf("Done JIT compiling matvec kernel!\n");
 
+    printf("Location in memory of native block matvec:  %d\n",
+                                            (int)(&native_bcsr_matvec));
+    printf("Location in memory of JIT block matvec:     %d\n", (int)mv);
+
+
+    printf("Changing A's implementation of block matvec to point to \n");
+    printf("    the JIT-compiled matvec.\n");
+    A->matvec = mv;
+    printf("New location of A's block matvec implementation: %d\n",
+                                                        (int)A->matvec);
+
+    for (i = 0; i < nn; i++) {
+        x[i] = 1.0;
+        y[i] = 1.0;
+    }
+
+    printf("\n");
+    printf("Multiplying graph Laplacian by constant vector \n");
+    printf("    using JIT-compiled block matvec.\n");
+    blockSparseMatrixVectorMultiply(A, x, y);
+
+    for (i = 0; i < nn; i++) {
+        if (y[i] != 0.0) {
+            printf("%d %g\n", i, y[i]);
+            return 1;
+        }
+    }
+
+    printf("JIT-compiled block matvec gave correct result of 0! Wahoo!\n");
+
+
+    /* Free up the memory used */
     destroyGraph(g);
     free(g);
 
