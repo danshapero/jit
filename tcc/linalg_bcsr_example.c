@@ -10,12 +10,14 @@
 
 int main(int arg, char **argv) {
 
+    /* -------------------------------------------------------------------
+      /  Build a random graph                                            /
+     -------------------------------------------------------------------- */
     int i, j, k, nn, ne;
-    double z, p;
+    double q, p;
     nn = 512;
 
 
-    /* Build an Erdos-Renyi graph `g` */
     Graph *g;
     g = (Graph *) malloc(sizeof(Graph));
     initGraph(g, nn, nn);
@@ -26,8 +28,8 @@ int main(int arg, char **argv) {
         addEdge(g, i, i);
 
         for (j = i + 1; j < nn; j++) {
-            z = (1.0 * rand()) / RAND_MAX;
-            if (z < p) {
+            q = (1.0 * rand()) / RAND_MAX;
+            if (q < p) {
                 addEdge(g, i, j);
                 addEdge(g, j, i);
             }
@@ -40,13 +42,13 @@ int main(int arg, char **argv) {
     printf("    Max degree: %d\n", getMaxDegree(g));
 
 
-    /* Build a matrix on the graph `g` */
+    /* -------------------------------------------------------------------
+      /  Build the graph Laplacian                                       /
+     -------------------------------------------------------------------- */
     SparseMatrix *B;
     B = malloc( sizeof(SparseMatrix) );
     initSparseMatrix(B, nn, nn, g);
 
-
-    /* Construct the Laplacian of the graph `g` */
     int d = getMaxDegree(g);
     int *neighbors;
     neighbors = (int *) malloc( d * sizeof(int) );
@@ -70,7 +72,9 @@ int main(int arg, char **argv) {
     printf("Constructing graph Laplacian.\n");
 
 
-    /* Turn the matrix into a block matrix */
+    /* -------------------------------------------------------------------
+      /  Blockify the matrix                                             /
+     -------------------------------------------------------------------- */
     BlockSparseMatrix *A;
     A = malloc( sizeof(BlockSparseMatrix) );
     blockify(A, B, 8, 8);
@@ -79,62 +83,113 @@ int main(int arg, char **argv) {
 
 
     /* Make some vectors and multiply them by `A` */
-    double *x, *y;
+    double *x, *y, *z, error;
     x = (double *) malloc( nn * sizeof(double) );
     y = (double *) malloc( nn * sizeof(double) );
+    z = (double *) malloc( nn * sizeof(double) );
+
     for (i = 0; i < nn; i++) {
-        x[i] = 1.0;
+        x[i] = (1.0 * rand()) / RAND_MAX;
         y[i] = 1.0;
+        z[i] = 0.0;
     }
 
+    sparseMatrixVectorMultiply(B, x, z);
 
-    printf("Multiplying blockified graph Laplacian by constant vector 1.\n");
+
+    printf("Multiplying blockified graph Laplacian by random vector.\n");
     blockSparseMatrixVectorMultiply(A, x, y);
 
+    error = 0.0;
     for (i = 0; i < nn; i++) {
-        if (y[i] != 0.0) {
-            printf("%d %g\n", i, y[i]);
-            return 1;
-        }
+        q = y[i] - z[i];
+        error = error + q * q;
     }
+    error = sqrt(error) / nn;
 
-    printf("Block matrix multiplication gave correct result of 0.\n");
+    printf("RMS difference between regular and block matrix-vector\n");
+    printf("    multiplication of a random vector: %g\n", error);
+
+    printf("\n");
 
 
+    /* -------------------------------------------------------------------
+      /  JIT compile block matrix-vector multiplication                  /
+     -------------------------------------------------------------------- */
+
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     printf("JIT compiling the block matrix-vector multiplication kernel:\n");
     BlockMatvec mv;
     mv = jitCompileBlockMatvec(8, 8);
     printf("Done JIT compiling matvec kernel!\n");
 
-    printf("Location in memory of native block matvec:  %d\n",
+    printf("Location in memory of native block matvec:  %x\n",
                                             (int)(&native_bcsr_matvec));
-    printf("Location in memory of JIT block matvec:     %d\n", (int)mv);
+    printf("Location in memory of JIT block matvec:     %x\n", (int)mv);
 
 
     printf("Changing A's implementation of block matvec to point to \n");
     printf("    the JIT-compiled matvec.\n");
     A->matvec = mv;
-    printf("New location of A's block matvec implementation: %d\n",
+    printf("New location of A's block matvec implementation: %x\n",
                                                         (int)A->matvec);
 
     for (i = 0; i < nn; i++) {
-        x[i] = 1.0;
         y[i] = 1.0;
     }
 
     printf("\n");
-    printf("Multiplying graph Laplacian by constant vector \n");
+    printf("Multiplying graph Laplacian by random vector \n");
     printf("    using JIT-compiled block matvec.\n");
     blockSparseMatrixVectorMultiply(A, x, y);
 
+    error = 0.0;
     for (i = 0; i < nn; i++) {
-        if (y[i] != 0.0) {
-            printf("%d %g\n", i, y[i]);
-            return 1;
-        }
+        q = y[i] - z[i];
+        error = error + q * q;
+    }
+    error = sqrt(error) / nn;
+
+    printf("RMS difference between regular and JIT block matrix-vector\n");
+    printf("    multiplication of a random vector: %g\n", error);
+
+    printf("\n");
+
+
+
+    /* -------------------------------------------------------------------
+      /  JIT compile block specialized matrix-vector multiplication      /
+     -------------------------------------------------------------------- */
+
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("JIT compiling a specialized block matrix-vector \n");
+    printf("    kernel for the block size (%d, %d).\n", 8, 8);
+    BlockMatvec mva;
+    mva = jitCompileSpecializedBlockMatvec(8, 8);
+    printf("Location in memory of old JIT block matvec: %x\n", (int)mv);
+    printf("Location in memory of new JIT block matvec: %x\n", (int)mva);
+    printf("Changing A's implementation of block matvec to point to \n");
+    printf("    the new JIT-compiled matvec.\n");
+    A->matvec = mva;
+
+
+    for (i = 0; i < nn; i++) {
+        y[i] = 1.0;
     }
 
-    printf("JIT-compiled block matvec gave correct result of 0! Wahoo!\n");
+    printf("Multiplying graph Laplacian by random vector \n");
+    printf("    using JIT-compiled block matvec.\n");
+    blockSparseMatrixVectorMultiply(A, x, y);
+
+    error = 0.0;
+    for (i = 0; i < nn; i++) {
+        q = y[i] - z[i];
+        error = error + q * q;
+    }
+    error = sqrt(error) / nn;
+
+    printf("RMS difference between regular and JIT block matrix-vector\n");
+    printf("    multiplication of a random vector: %g\n", error);
 
 
     /* Free up the memory used */
@@ -149,6 +204,7 @@ int main(int arg, char **argv) {
 
     free(x);
     free(y);
+    free(z);
 
     return 0;
 }
