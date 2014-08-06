@@ -147,5 +147,8 @@ int main(int arg, char **argv) {
     destroyBlockSparseMatrix(A);
     free(A);
 
+    free(x);
+    free(y);
+
     return 0;
 }

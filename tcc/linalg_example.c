@@ -134,5 +134,8 @@ int main(int arg, char **argv) {
     destroySparseMatrix(A);
     free(A);
 
+    free(x);
+    free(y);
+
     return 0;
 }
