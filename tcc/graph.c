@@ -16,15 +16,15 @@ void initGraph(Graph *g, int m, int n) {
 
 
 void destroyGraph(Graph *g) {
-    g->m = 0;
-    g->n = 0;
-    g->ne = 0;
-
     for (int i = 0; i < g->m; i++) {
         destroyStack(g->lists + i);
     }
 
     free(g->lists);
+
+    g->m = 0;
+    g->n = 0;
+    g->ne = 0;
 }
 
 
