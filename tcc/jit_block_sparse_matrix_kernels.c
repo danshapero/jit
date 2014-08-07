@@ -136,8 +136,8 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     strcpy(block_matvec_code, 
     "#include \"block_sparse_matrix.h\"                                 \n"
     "void jit_ubcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {\n"
-    "    int I, J, K, i, j, M, N, index;                                \n"
-    "    double z;                                                      \n"
+    "    int I, J, K, i, j, k, M, N;                                    \n"
+    "    double *v;                                                     \n"
     "                                                                   \n"
     "    for (i = 0; i < A->m; i++) y[i] = 0.0;                         \n"
     "                                                                   \n"
@@ -156,29 +156,35 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
 
 
     sprintf(line, 
-    "            index = K * %d * %d;                                   \n",
+    "            k = K * %d * %d;                                       \n",
     mc, nc);
     strcat(block_matvec_code, line);
+    strcat(block_matvec_code,
+    "            v = (*A).val + k;                                      \n"
+    );
 
     sprintf(line, 
     "            i = %d * I;                                            \n",
     mc);
     strcat(block_matvec_code, line);
 
+    sprintf(line,
+    "            j = %d * J;                                            \n",
+    nc);
+    strcat(block_matvec_code, line);
+
     for (k = 0; k < mc; k++) {
         sprintf(line,
-    "            j = %d * J;                                            \n",
-        nc);
-	strcat(block_matvec_code, line);
+    "            y[i+%d] += v[%d]*x[j]",
+        k, mc * k);
+        strcat(block_matvec_code, line);
 
-        for (l = 0; l < nc; l++) {
-            strcat(block_matvec_code, 
-    "            y[i] += A->val[index] * x[j];  index++;  j++;          \n"
-            );
+        for (l = 1; l < nc; l++) {
+            sprintf(line, " + v[%d]*x[j+%d]", mc * k + l, l);
+            strcat(block_matvec_code, line);
         }
-	strcat(block_matvec_code,
-    "            i++;                                                   \n"
-        );
+        strcat(block_matvec_code, ";\n");
+
     }
 
     strcat(block_matvec_code,
@@ -186,7 +192,7 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     "    }                                                              \n"
     "}                                                                  \n");
 
-//    printf(block_matvec_code);
+      printf(block_matvec_code);
 
     BlockMatvec jit_compiled_block_matvec;
 
