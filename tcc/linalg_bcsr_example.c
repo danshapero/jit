@@ -194,6 +194,46 @@ int main(int arg, char **argv) {
     printf("RMS difference between regular and JIT block matrix-vector\n");
     printf("    multiplication of a random vector: %g\n", error);
 
+    printf("\n");
+
+
+
+    /* -------------------------------------------------------------------
+      /  JIT compile unrolled block matrix-vector multiplication         /
+     -------------------------------------------------------------------- */
+
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("JIT compiling an unrolled block matrix-vector \n");
+    printf("    kernel for the block size (%d, %d).\n", 8, 8);
+    BlockMatvec mvu;
+    mvu = jitCompileUnrolledBlockMatvec(CompilerState, 8, 8);
+    printf("Location in memory of unrolled JIT block matvec: %x\n", (int)mvu);
+    printf("Changing A's implementation of block matvec to point to \n");
+    printf("    the new JIT-compiled unrolled matvec.\n");
+    A->matvec = mvu;
+
+
+    for (i = 0; i < nn; i++) {
+        y[i] = 1.0;
+    }
+
+    printf("Multiplying graph Laplacian by random vector \n");
+    printf("    using JIT-compiled block matvec.\n");
+    blockSparseMatrixVectorMultiply(A, x, y);
+
+    error = 0.0;
+    for (i = 0; i < nn; i++) {
+        q = y[i] - z[i];
+        error = error + q * q;
+    }
+    error = sqrt(error) / nn;
+
+    printf("RMS difference between regular and JIT block matrix-vector\n");
+    printf("    multiplication of a random vector: %g\n", error);
+
+    printf("\n");
+
+
 
     /* Free up the memory used */
     destroyGraph(g);

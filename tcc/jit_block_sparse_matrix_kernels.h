@@ -4,3 +4,4 @@
 
 BlockMatvec jitCompileBlockMatvec(TCCState *s, int mc, int nc);
 BlockMatvec jitCompileSpecializedBlockMatvec(TCCState *s, int mc, int nc);
+BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc);
