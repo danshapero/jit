@@ -1,4 +1,5 @@
 
+#include "libtcc.h"
 #include "sparse_matrix.h"
 
-Matvec jitCompileMatvec();
+Matvec jitCompileMatvec(TCCState *s);

@@ -93,13 +93,16 @@ int main(int arg, char **argv) {
 
 
     printf("JIT compiling the matrix-vector multiplication kernel:\n");
+    TCCState *s;
+    s = tcc_new();
     Matvec mv;
-    mv = jitCompileMatvec();
+    mv = jitCompileMatvec(s);
     printf("Done JIT compiling matvec kernel!\n");
 
-    printf("Location in memory of native matvec:       %d\n", 
+    printf("Location in memory of native matvec: %x\n", 
                                             (int)(&native_csr_matvec));
-    printf("Location in memory of JIT matvec:          %d\n", (int)mv);
+    printf("Location in memory of JIT matvec:    %x\n", (int)mv);
+    tcc_delete(s);
 
 
     printf("Changing A's implementation of matvec to point to \n");
