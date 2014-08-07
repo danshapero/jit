@@ -116,14 +116,14 @@ int main(int arg, char **argv) {
     /* -------------------------------------------------------------------
       /  JIT compile block matrix-vector multiplication                  /
      -------------------------------------------------------------------- */
-    TCCState *s;
-    s = tcc_new();
+    TCCState *CompilerState;
+    CompilerState = tcc_new();
 
 
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     printf("JIT compiling the block matrix-vector multiplication kernel:\n");
     BlockMatvec mv;
-    mv = jitCompileBlockMatvec(s, 8, 8);
+    mv = jitCompileBlockMatvec(CompilerState, 8, 8);
     printf("Done JIT compiling matvec kernel!\n");
 
     printf("Location in memory of native block matvec:  %x\n",
@@ -168,7 +168,7 @@ int main(int arg, char **argv) {
     printf("JIT compiling a specialized block matrix-vector \n");
     printf("    kernel for the block size (%d, %d).\n", 8, 8);
     BlockMatvec mva;
-    mva = jitCompileSpecializedBlockMatvec(s, 8, 8);
+    mva = jitCompileSpecializedBlockMatvec(CompilerState, 8, 8);
     printf("Location in memory of old JIT block matvec: %x\n", (int)mv);
     printf("Location in memory of new JIT block matvec: %x\n", (int)mva);
     printf("Changing A's implementation of block matvec to point to \n");
@@ -209,7 +209,7 @@ int main(int arg, char **argv) {
     free(y);
     free(z);
 
-    tcc_delete(s);
+    tcc_delete(CompilerState);
 
     return 0;
 }
