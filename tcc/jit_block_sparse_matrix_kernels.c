@@ -192,8 +192,6 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     "    }                                                              \n"
     "}                                                                  \n");
 
-      printf(block_matvec_code);
-
     BlockMatvec jit_compiled_block_matvec;
 
     /* Set the output of the compilation to be a location in memory,
