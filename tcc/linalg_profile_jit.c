@@ -148,27 +148,25 @@ int main(int argc, char **argv) {
     }
 
 
-    clock_t start = clock(), diff;
+    clock_t start, end;
+    start = clock();
     for (k = 0; k < nn; k++) {
         blockSparseMatrixVectorMultiply(A, x, y);
     }
-    diff = clock() - start;
+    end = clock();
+    double elapsed = (end - start) * 1000.0 / CLOCKS_PER_SEC;
 
-    int msec_A = diff * 1000 / CLOCKS_PER_SEC;
+    printf("Block sparse matrix-vector multiply: %g\n", elapsed);
 
 
     start = clock();
     for (k = 0; k < nn; k++) {
         sparseMatrixVectorMultiply(B, x, y);
     }
-    diff = clock() - start;
+    end = clock();
+    elapsed = (end - start) * 1000.0 / CLOCKS_PER_SEC;
 
-    int msec_B = diff * 1000 / CLOCKS_PER_SEC;
-
-
-    printf("Block sparse matrix-vector multiply: %d ms \n", msec_A);
-    printf("Sparse matrix-vector multiply:       %d ms \n", msec_B);
-
+    printf("Sparse matrix-vector multiply:       %g\n", elapsed);
 
 
     /* Free up heap-allocated memory */
