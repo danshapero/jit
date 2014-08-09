@@ -5,7 +5,7 @@ CXX = clang++
 CFLAGS = -std=c99
 CXXflags = -std=c++11
 
-all: linalg_example linalg_bcsr_example
+all: linalg_example linalg_bcsr_example linalg_profile_jit
 
 %.o: %.c
 	$(CC) -c $< $(IFLAGS) $(CFLAGS)
@@ -19,6 +19,9 @@ linalg_example: stack.o graph.o sparse_matrix.o jit_sparse_matrix_kernels.o lina
 linalg_bcsr_example: stack.o graph.o sparse_matrix.o block_sparse_matrix.o jit_block_sparse_matrix_kernels.o linalg_bcsr_example.o
 	$(CC) -o $@ $^ $(CFLAGS) -lm -ltcc -ldl
 
+linalg_profile_jit: stack.o graph.o sparse_matrix.o block_sparse_matrix.o jit_sparse_matrix_kernels.o jit_block_sparse_matrix_kernels.o linalg_profile_jit.o
+	$(CC) -o $@ $^ $(CFLAGS) -lm -ltcc -ldl
+
 clean:
-	rm -rf *.o *~ tcc_jit linalg_example linalg_bcsr_example
+	rm -rf *.o *~ tcc_jit linalg_example linalg_bcsr_example linalg_profile_jit
 
