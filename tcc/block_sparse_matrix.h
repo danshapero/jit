@@ -1,5 +1,8 @@
 #include "sparse_matrix.h"
 
+#ifndef BLOCK_SPARSE_MATRIX_H
+#define BLOCK_SPARSE_MATRIX_H
+
 struct BlockSparseMatrix_t {
     int m, n, mc, nc, nnz;
     int *ptr, *node;
@@ -21,3 +24,5 @@ int blockSparseMatGetRowSize(BlockSparseMatrix *A, int i);
 
 void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y);
 void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y);
+
+#endif

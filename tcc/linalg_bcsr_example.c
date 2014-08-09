@@ -8,7 +8,7 @@
 
 
 
-int main(int arg, char **argv) {
+int main(int argc, char **argv) {
 
     /* -------------------------------------------------------------------
       /  Build a random graph                                            /

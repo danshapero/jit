@@ -1,4 +1,7 @@
 
+#ifndef STACK_H
+#define STACK_H
+
 typedef struct {
     int len, capacity;
     int *entries;
@@ -12,3 +15,5 @@ void push(Stack *s, int k);
 int getEntry(Stack *s, int i);
 void setEntry(Stack *s, int k, int i);
 int pop(Stack *s);
+
+#endif

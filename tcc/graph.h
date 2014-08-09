@@ -1,5 +1,8 @@
 #include "stack.h"
 
+#ifndef GRAPH_H
+#define GRAPH_H
+
 typedef struct {
     int m, n, ne;
     Stack *lists;
@@ -16,3 +19,5 @@ void getNeighbors(Graph *g, int *neighbors, int i);
 
 void addEdge(Graph *g, int i, int j);
 void deleteEdge(Graph *g, int i, int j);
+
+#endif

@@ -1,5 +1,8 @@
 #include "graph.h"
 
+#ifndef SPARSE_MATRIX_H
+#define SPARSE_MATRIX_H
+
 struct SparseMatrix_t {
     int m, n, nnz;
     int *ptr, *node;
@@ -21,3 +24,5 @@ int getRowSize(SparseMatrix *A, int i);
 
 void sparseMatrixVectorMultiply(SparseMatrix *A, double *x, double *y);
 void native_csr_matvec(SparseMatrix *A, double *x, double *y);
+
+#endif
