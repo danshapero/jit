@@ -3,15 +3,18 @@
 #ifndef SPARSE_MATRIX_H
 #define SPARSE_MATRIX_H
 
+typedef void (*Matvec) (int m, int n, int nnz,              // Matrix size
+                        int *ptr, int *node, double *val,   // Matrix structure
+                        double *x, double *y);              // Vectors
+
 struct SparseMatrix_t {
     int m, n, nnz;
     int *ptr, *node;
     double *val;
-    void (*matvec) (struct SparseMatrix_t *A, double *x, double *y);
+    Matvec matvec;
 };
 
 typedef struct SparseMatrix_t SparseMatrix;
-typedef void (*Matvec) (SparseMatrix *A, double *x, double *y);
 
 void initSparseMatrix(SparseMatrix *A, int m, int n, Graph *g);
 void destroySparseMatrix(SparseMatrix *A);
@@ -23,6 +26,8 @@ double getValue(SparseMatrix *A, int i, int j);
 int getRowSize(SparseMatrix *A, int i);
 
 void sparseMatrixVectorMultiply(SparseMatrix *A, double *x, double *y);
-void native_csr_matvec(SparseMatrix *A, double *x, double *y);
+void native_csr_matvec(int m, int n, int nnz,
+                       int *ptr, int *node, double *val,
+                       double *x, double *y);
 
 #endif

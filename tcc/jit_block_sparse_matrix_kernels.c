@@ -9,22 +9,23 @@
 BlockMatvec jitCompileBlockMatvec(TCCState *s, int mc, int nc) {
 
     char block_matvec_code[] =
-    "#include \"block_sparse_matrix.h\"                                 \n"
-    "void jit_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y) { \n"
+    "void jit_bcsr_matvec(int m, int n, int mc, int nc, int nnz,        \n"
+    "                     int *ptr, int *node, double *val,             \n"
+    "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
     "    double z;                                                      \n"
     "                                                                   \n"
-    "    for (i = 0; i < A->m; i++) y[i] = 0.0;                         \n"
+    "    for (i = 0; i < m; i++) y[i] = 0.0;                            \n"
     "                                                                   \n"
-    "    M = A->m / A->mc;                                              \n"
+    "    M = m / mc;                                                    \n"
     "    for (I = 0; I < M; I++) {                                      \n"
-    "        for (K = A->ptr[I]; K < A->ptr[I + 1]; K++) {              \n"
-    "            J = A->node[K];                                        \n"
+    "        for (K = ptr[I]; K < ptr[I + 1]; K++) {                    \n"
+    "            J = node[K];                                           \n"
     "                                                                   \n"
-    "            index = K * A->mc * A->nc;                             \n"
-    "            for (i = A->mc * I; i < A->mc * (I + 1); i++) {        \n"
-    "                for (j = A->nc * J; j < A->nc * (J + 1); j++) {    \n"
-    "                    y[i] += A->val[index] * x[j];                  \n"
+    "            index = K * mc * nc;                                   \n"
+    "            for (i = mc * I; i < mc * (I + 1); i++) {              \n"
+    "                for (j = nc * J; j < nc * (J + 1); j++) {          \n"
+    "                    y[i] += val[index] * x[j];                     \n"
     "                    index++;                                       \n"
     "                }                                                  \n"
     "            }                                                      \n"
@@ -58,24 +59,25 @@ BlockMatvec jitCompileSpecializedBlockMatvec(TCCState *s, int mc, int nc) {
     char line[70];
 
     strcpy(block_matvec_code, 
-    "#include \"block_sparse_matrix.h\"                                 \n"
-    "void jit_sbcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {\n"
+    "void jit_sbcsr_matvec(int m, int n, int mc, int nc, int nnz,       \n"
+    "                     int *ptr, int *node, double *val,             \n"
+    "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
     "    double z;                                                      \n"
     "                                                                   \n"
-    "    for (i = 0; i < A->m; i++) y[i] = 0.0;                         \n"
+    "    for (i = 0; i < m; i++) y[i] = 0.0;                            \n"
     "                                                                   \n"
     );
 
     sprintf(line,
-    "    M = A->m / %d;                                                 \n",
+    "    M = m / %d;                                                    \n",
     mc);
     strcat(block_matvec_code, line);
 
     strcat(block_matvec_code,
     "    for (I = 0; I < M; I++) {                                      \n"
-    "        for (K = A->ptr[I]; K < A->ptr[I + 1]; K++) {              \n"
-    "            J = A->node[K];                                        \n"
+    "        for (K = ptr[I]; K < ptr[I + 1]; K++) {                    \n"
+    "            J = node[K];                                           \n"
     "                                                                   \n"
     );
 
@@ -96,7 +98,7 @@ BlockMatvec jitCompileSpecializedBlockMatvec(TCCState *s, int mc, int nc) {
     strcat(block_matvec_code, line);
 
     strcat(block_matvec_code,
-    "                    y[i] += A->val[index] * x[j];                  \n"
+    "                    y[i] += val[index] * x[j];                     \n"
     "                    index++;                                       \n"
     "                }                                                  \n"
     "            }                                                      \n"
@@ -134,24 +136,25 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     int k, l;
 
     strcpy(block_matvec_code, 
-    "#include \"block_sparse_matrix.h\"                                 \n"
-    "void jit_ubcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {\n"
+    "void jit_ubcsr_matvec(int m, int n, int mc, int nc, int nnz,       \n"
+    "                     int *ptr, int *node, double *val,             \n"
+    "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, k, M, N;                                    \n"
     "    double *v;                                                     \n"
     "                                                                   \n"
-    "    for (i = 0; i < A->m; i++) y[i] = 0.0;                         \n"
+    "    for (i = 0; i < m; i++) y[i] = 0.0;                            \n"
     "                                                                   \n"
     );
 
     sprintf(line,
-    "    M = A->m / %d;                                                 \n",
+    "    M = m / %d;                                                    \n",
     mc);
     strcat(block_matvec_code, line);
 
     strcat(block_matvec_code, 
     "    for (I = 0; I < M; I++) {                                      \n"
-    "        for (K = A->ptr[I]; K < A->ptr[I + 1]; K++) {              \n"
-    "            J = A->node[K];                                        \n"
+    "        for (K = ptr[I]; K < ptr[I + 1]; K++) {                    \n"
+    "            J = node[K];                                           \n"
     );
 
 
@@ -160,7 +163,7 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     mc, nc);
     strcat(block_matvec_code, line);
     strcat(block_matvec_code,
-    "            v = (*A).val + k;                                      \n"
+    "            v = val + k;                                           \n"
     );
 
     sprintf(line, 

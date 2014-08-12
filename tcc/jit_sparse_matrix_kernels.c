@@ -7,22 +7,23 @@
 
 Matvec jitCompileMatvec(TCCState *s) {
     char matvec_code[] = 
-    "#include \"sparse_matrix.h\"                               \n"
-    "void jit_matvec(SparseMatrix *A, double *x, double *y) {   \n"
-    "    int i, j, k;                                           \n"
-    "    double z;                                              \n"
-    "                                                           \n"
-    "    for (i = 0; i < A->m; i++) {                           \n"
-    "        z = 0.0;                                           \n"
-    "                                                           \n"
-    "        for (k = A->ptr[i]; k < A->ptr[i + 1]; k++) {      \n"
-    "            j = A->node[k];                                \n"
-    "            z += A->val[k] * x[j];                         \n"
-    "        }                                                  \n"
-    "                                                           \n"
-    "        y[i] = z;                                          \n"
-    "    }                                                      \n"
-    "}                                                          \n";
+    "void jit_matvec(int m, int n, int nnz,                                 \n"
+    "                int *ptr, int *node, double *val,                      \n"
+    "                double *x, double *y) {                                \n"
+    "    int i, j, k;                                                       \n"
+    "    double z;                                                          \n"
+    "                                                                       \n"
+    "    for (i = 0; i < m; i++) {                                          \n"
+    "        z = 0.0;                                                       \n"
+    "                                                                       \n"
+    "        for (k = ptr[i]; k < ptr[i + 1]; k++) {                        \n"
+    "            j = node[k];                                               \n"
+    "            z += val[k] * x[j];                                        \n"
+    "        }                                                              \n"
+    "                                                                       \n"
+    "        y[i] = z;                                                      \n"
+    "    }                                                                  \n"
+    "}                                                                      \n";
 
     Matvec jit_compiled_matvec;
 

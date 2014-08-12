@@ -178,25 +178,27 @@ int blockSparseMatGetRowSize(BlockSparseMatrix *A, int i) {
 
 
 void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y) {
-    A->matvec(A, x, y);
+    A->matvec(A->m, A->n, A->mc, A->nc, A->nnz, A->ptr, A->node, A->val, x, y);
 }
 
 
-void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {
+void native_bcsr_matvec(int m, int n, int mc, int nc, int nnz,
+                        int *ptr, int *node, double *val,
+                        double *x, double *y) {
     int I, J, K, i, j, M, N, index;
     double z;
 
-    for (i = 0; i < A->m; i++) y[i] = 0.0;
+    for (i = 0; i < m; i++) y[i] = 0.0;
 
-    M = A->m / A->mc;
+    M = m / mc;
     for (I = 0; I < M; I++) {
-        for (K = A->ptr[I]; K < A->ptr[I + 1]; K++) {
-            J = A->node[K];
+        for (K = ptr[I]; K < ptr[I + 1]; K++) {
+            J = node[K];
 
-            index = K * A->mc * A->nc;
-            for (i = A->mc * I; i < A->mc * (I + 1); i++) {
-                for (j = A->nc * J; j < A->nc * (J + 1); j++) {
-                    y[i] += A->val[index] * x[j];
+            index = K * mc * nc;
+            for (i = mc * I; i < mc * (I + 1); i++) {
+                for (j = nc * J; j < nc * (J + 1); j++) {
+                    y[i] += val[index] * x[j];
                     index++;
                 }
             }
