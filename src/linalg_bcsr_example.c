@@ -110,26 +110,52 @@ int main(int argc, char **argv) {
     printf("RMS difference between regular and block matrix-vector\n");
     printf("    multiplication of a random vector: %g\n", error);
 
-    printf("\n");
+    printf("\n\n");
 
 
     /* -------------------------------------------------------------------
-      /  JIT compile block matrix-vector multiplication                  /
+      /  JIT compile block matrix-vector multiplication kernels          /
      -------------------------------------------------------------------- */
-    TCCState *CompilerState;
-    CompilerState = tcc_new();
-
 
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    printf("JIT compiling the block matrix-vector multiplication kernel:\n");
-    BlockMatvec mv;
-    mv = jitCompileBlockMatvec(CompilerState, 8, 8);
-    printf("Done JIT compiling matvec kernel!\n");
+    printf("JIT compiling block matrix-vector multiplication kernels.   \n\n");
 
-    printf("Location in memory of native block matvec:  %x\n",
+    TCCState *CompilerState;
+    CompilerState = tcc_new();
+    jitCompileBlockMatvec(CompilerState, "bcsr_matvec", 8, 8);
+    jitCompileSpecializedBlockMatvec(CompilerState, "sbcsr_matvec", 8, 8);
+    jitCompileUnrolledBlockMatvec(CompilerState, "ubcsr_matvec", 8, 8);
+
+    /* Relocate all the JIT compiled code into executable memory */
+    if (tcc_relocate(CompilerState) < 0) {
+        printf("Unable to relocate JIT code! Oh no!\n");
+        return 1;
+    }
+
+    printf("Done JIT compiling matvec kernels!\n");
+
+    BlockMatvec mv, mvs, mvu;
+
+    mv  = jitGetBlockMatvec(CompilerState, "bcsr_matvec");
+    mvs = jitGetBlockMatvec(CompilerState, "sbcsr_matvec");
+    mvu = jitGetBlockMatvec(CompilerState, "ubcsr_matvec");
+
+    tcc_delete(CompilerState);
+
+    printf("Memory location of native block matvec:  %x\n",
                                             (int)(&native_bcsr_matvec));
-    printf("Location in memory of JIT block matvec:     %x\n", (int)mv);
+    printf("Memory location JIT block matvec:                %x\n", (int)mv);
+    printf("Memory location of specialized JIT block matvec: %x\n", (int)mvs);
+    printf("Memory location of unrolled JIT block matvec:    %x\n", (int)mvu);
+    printf("\n\n");
 
+
+    /* -------------------------------------------------------------------
+      /  Test each block matrix-vector multiplication kernel             /
+     -------------------------------------------------------------------- */
+
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("Testing block matrix-vector multiplication kernels.\n\n");
 
     printf("Changing A's implementation of block matvec to point to \n");
     printf("    the JIT-compiled matvec.\n");
@@ -164,16 +190,13 @@ int main(int argc, char **argv) {
       /  JIT compile block specialized matrix-vector multiplication      /
      -------------------------------------------------------------------- */
 
-    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    printf("JIT compiling a specialized block matrix-vector \n");
-    printf("    kernel for the block size (%d, %d).\n", 8, 8);
-    BlockMatvec mva;
-    mva = jitCompileSpecializedBlockMatvec(CompilerState, 8, 8);
+    printf("Testing a specialized block matrix-vector kernel for the \n");
+    printf("    block size (%d, %d).\n", 8, 8);
     printf("Location in memory of old JIT block matvec: %x\n", (int)mv);
-    printf("Location in memory of new JIT block matvec: %x\n", (int)mva);
+    printf("Location in memory of new JIT block matvec: %x\n", (int)mvs);
     printf("Changing A's implementation of block matvec to point to \n");
     printf("    the new JIT-compiled matvec.\n");
-    A->matvec = mva;
+    A->matvec = mvs;
 
 
     for (i = 0; i < nn; i++) {
@@ -202,14 +225,10 @@ int main(int argc, char **argv) {
       /  JIT compile unrolled block matrix-vector multiplication         /
      -------------------------------------------------------------------- */
 
-    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    printf("JIT compiling an unrolled block matrix-vector \n");
-    printf("    kernel for the block size (%d, %d).\n", 8, 8);
-    BlockMatvec mvu;
-    mvu = jitCompileUnrolledBlockMatvec(CompilerState, 8, 8);
-    printf("Location in memory of unrolled JIT block matvec: %x\n", (int)mvu);
+    printf("Testing an unrolled block matrix-vector kernel for the \n");
+    printf("    the block size (%d, %d).\n", 8, 8);
     printf("Changing A's implementation of block matvec to point to \n");
-    printf("    the new JIT-compiled unrolled matvec.\n");
+    printf("    the JIT-compiled unrolled matvec.\n");
     A->matvec = mvu;
 
 
@@ -248,8 +267,6 @@ int main(int argc, char **argv) {
     free(x);
     free(y);
     free(z);
-
-    tcc_delete(CompilerState);
 
     return 0;
 }

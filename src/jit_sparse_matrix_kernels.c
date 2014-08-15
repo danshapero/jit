@@ -2,12 +2,16 @@
 #include "libtcc.h"
 #include "sparse_matrix.h"
 
+#include <string.h>
 #include <stdlib.h>
 
 
-Matvec jitCompileMatvec(TCCState *s) {
-    char matvec_code[] = 
-    "void jit_matvec(int m, int n, int nnz,                                 \n"
+void jitCompileMatvec(TCCState *s, char *name) {
+    char matvec_code[30 * 70];
+
+    strcpy(matvec_code, "void ");
+    strcat(matvec_code, name);
+    strcat(matvec_code, "(int m, int n, int nnz,                            \n"
     "                int *ptr, int *node, double *val,                      \n"
     "                double *x, double *y) {                                \n"
     "    int i, j, k;                                                       \n"
@@ -23,7 +27,7 @@ Matvec jitCompileMatvec(TCCState *s) {
     "                                                                       \n"
     "        y[i] = z;                                                      \n"
     "    }                                                                  \n"
-    "}                                                                      \n";
+    "}                                                                      \n");
 
     Matvec jit_compiled_matvec;
 
@@ -33,13 +37,10 @@ Matvec jitCompileMatvec(TCCState *s) {
 
     /* Compile the matvec code defined above */
     tcc_compile_string(s, matvec_code);
+}
 
-    /* Relocate the object code to a new, executable location in memory */
-    if (tcc_relocate(s) < 0) return NULL;
 
-    /* Get a function pointed to the location in memory of the object code */
-    jit_compiled_matvec = tcc_get_symbol(s, "jit_matvec");
-
-    return jit_compiled_matvec;
-
+Matvec jitGetMatvec(TCCState *s, char *name) {
+    Matvec jit_matvec = tcc_get_symbol(s, name);
+    return jit_matvec;
 }

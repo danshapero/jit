@@ -6,10 +6,12 @@
 #include "block_sparse_matrix.h"
 #include "libtcc.h"
 
-BlockMatvec jitCompileBlockMatvec(TCCState *s, int mc, int nc) {
+void jitCompileBlockMatvec(TCCState *s, char *name, int mc, int nc) {
 
-    char block_matvec_code[] =
-    "void jit_bcsr_matvec(int m, int n, int mc, int nc, int nnz,        \n"
+    char block_matvec_code[30 * 70];
+    strcpy(block_matvec_code, "void ");
+    strcat(block_matvec_code, name);
+    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
     "                     int *ptr, int *node, double *val,             \n"
     "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
@@ -31,9 +33,7 @@ BlockMatvec jitCompileBlockMatvec(TCCState *s, int mc, int nc) {
     "            }                                                      \n"
     "        }                                                          \n"
     "    }                                                              \n"
-    "}                                                                  \n";
-
-    BlockMatvec jit_compiled_block_matvec;
+    "}                                                                  \n");
 
     /* Set the output of the compilation to be a location in memory,
        rather than an object file */
@@ -41,25 +41,17 @@ BlockMatvec jitCompileBlockMatvec(TCCState *s, int mc, int nc) {
 
     /* Compile the matvec code defined above */
     tcc_compile_string(s, block_matvec_code);
-
-    /* Relocate the object code to a new, executable location in memory */
-    if (tcc_relocate(s) < 0) return NULL;
-
-    /* Get a function pointed to the location in memory of the object code */
-    jit_compiled_block_matvec = tcc_get_symbol(s, "jit_bcsr_matvec");
-
-    return jit_compiled_block_matvec;
-
 }
 
 
-BlockMatvec jitCompileSpecializedBlockMatvec(TCCState *s, int mc, int nc) {
 
-    char block_matvec_code[24 * 70];
+void jitCompileSpecializedBlockMatvec(TCCState *s, char *name, int mc, int nc) {
+
     char line[70];
-
-    strcpy(block_matvec_code, 
-    "void jit_sbcsr_matvec(int m, int n, int mc, int nc, int nnz,       \n"
+    char block_matvec_code[30 * 70];
+    strcpy(block_matvec_code, "void ");
+    strcat(block_matvec_code, name);
+    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
     "                     int *ptr, int *node, double *val,             \n"
     "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
@@ -107,27 +99,16 @@ BlockMatvec jitCompileSpecializedBlockMatvec(TCCState *s, int mc, int nc) {
     "}                                                                  \n"
     );
 
-
-    BlockMatvec jit_compiled_block_matvec;
-
     /* Set the output of the compilation to be a location in memory,
        rather than an object file */
     tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
 
     /* Compile the matvec code defined above */
     tcc_compile_string(s, block_matvec_code);
-
-    /* Relocate the object code to a new, executable location in memory */
-    if (tcc_relocate(s) < 0) return NULL;
-
-    /* Get a function pointed to the location in memory of the object code */
-    jit_compiled_block_matvec = tcc_get_symbol(s, "jit_sbcsr_matvec");
-
-    return jit_compiled_block_matvec;
 }
 
 
-BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
+void jitCompileUnrolledBlockMatvec(TCCState *s, char *name, int mc, int nc) {
 
     char block_matvec_code[100 * 70];
     //TODO make this depend on how many lines of code we expect to need
@@ -135,8 +116,9 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     char line[70];
     int k, l;
 
-    strcpy(block_matvec_code, 
-    "void jit_ubcsr_matvec(int m, int n, int mc, int nc, int nnz,       \n"
+    strcpy(block_matvec_code, "void ");
+    strcat(block_matvec_code, name);
+    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
     "                     int *ptr, int *node, double *val,             \n"
     "                     double *x, double *y) {                       \n"
     "    int I, J, K, i, j, k, M, N;                                    \n"
@@ -195,20 +177,16 @@ BlockMatvec jitCompileUnrolledBlockMatvec(TCCState *s, int mc, int nc) {
     "    }                                                              \n"
     "}                                                                  \n");
 
-    BlockMatvec jit_compiled_block_matvec;
-
     /* Set the output of the compilation to be a location in memory,
        rather than an object file */
     tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
 
     /* Compile the matvec code defined above */
     tcc_compile_string(s, block_matvec_code);
+}
 
-    /* Relocate the object code to a new, executable location in memory */
-    if (tcc_relocate(s) < 0) return NULL;
 
-    /* Get a function pointed to the location in memory of the object code */
-    jit_compiled_block_matvec = tcc_get_symbol(s, "jit_ubcsr_matvec");
-
-    return jit_compiled_block_matvec;
+BlockMatvec jitGetBlockMatvec(TCCState *s, char *name) {
+    BlockMatvec jit_block_matvec = tcc_get_symbol(s, name);
+    return jit_block_matvec;
 }

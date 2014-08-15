@@ -122,11 +122,22 @@ int main(int argc, char **argv) {
     TCCState *CompilerState;
     CompilerState = tcc_new();
 
-    BlockMatvec amv;
-    amv = jitCompileUnrolledBlockMatvec(CompilerState, nb, nb);
+    jitCompileUnrolledBlockMatvec(CompilerState, "ubcsr_matvec", nb, nb);
+    jitCompileMatvec(CompilerState, "rcsr_matvec");
 
+    /* Relocate all the JIT compiled code into executable memory */
+    if (tcc_relocate(CompilerState) < 0) {
+        printf("Unable to relocate JIT code! Oh no!\n");
+        return 1;
+    }
+
+    BlockMatvec amv;
+    amv = jitGetBlockMatvec(CompilerState, "ubcsr_matvec");
     Matvec bmv;
-    bmv = jitCompileMatvec(CompilerState);
+    bmv = jitGetMatvec(CompilerState, "rcsr_matvec");
+
+    printf("Memory location of block matvec: %x\n", (int)amv);
+    printf("Memory location of csr matvec:   %x\n", (int)bmv);
 
     A->matvec = amv;
     B->matvec = bmv;
@@ -170,6 +181,9 @@ int main(int argc, char **argv) {
 
 
     /* Free up heap-allocated memory */
+
+    free(x);
+    free(y);
 
     tcc_delete(CompilerState);
 
