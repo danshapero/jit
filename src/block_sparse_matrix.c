@@ -178,13 +178,15 @@ int blockSparseMatGetRowSize(BlockSparseMatrix *A, int i) {
 
 
 void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y) {
-    A->matvec(A->m, A->n, A->mc, A->nc, A->nnz, A->ptr, A->node, A->val, x, y);
+    A->matvec(A, x, y);
 }
 
 
-void native_bcsr_matvec(int m, int n, int mc, int nc, int nnz,
-                        int *ptr, int *node, double *val,
-                        double *x, double *y) {
+void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y) {
+    int m = A->m, mc = A->mc, nc = A->nc;
+    int *ptr = A->ptr, *node = A->node;
+    double *val = A->val;
+
     int I, J, K, i, j, M, N, index;
     double z;
 

@@ -103,13 +103,14 @@ int getRowSize(SparseMatrix* A, int i) {
 
 
 void sparseMatrixVectorMultiply(SparseMatrix *A, double *x, double *y) {
-    A->matvec(A->m, A->n, A->nnz, A->ptr, A->node, A->val, x, y);
+    A->matvec(A, x, y);
 }
 
 
-void native_csr_matvec(int m, int n, int nnz,
-                       int *ptr, int *node, double *val,
-                       double *x, double *y) {
+void native_csr_matvec(SparseMatrix *A, double *x, double *y) {
+    int m = A->m;
+    int *ptr = A->ptr, *node = A->node;
+    double *val = A->val;
     int i, j, k;
     double z;
 

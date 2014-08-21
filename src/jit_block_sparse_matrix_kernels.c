@@ -9,11 +9,14 @@
 void jitCompileBlockMatvec(TCCState *s, char *name, int mc, int nc) {
 
     char block_matvec_code[30 * 70];
-    strcpy(block_matvec_code, "void ");
+    strcpy(block_matvec_code,
+    "#include \"../include/block_sparse_matrix.h\"                      \n");
+    strcat(block_matvec_code, "void ");
     strcat(block_matvec_code, name);
-    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
-    "                     int *ptr, int *node, double *val,             \n"
-    "                     double *x, double *y) {                       \n"
+    strcat(block_matvec_code,"(BlockSparseMatrix *A, double *x, double *y) {\n"
+    "    int m = A->m, mc = A->mc, nc = A->nc;                          \n"
+    "    int *ptr = A->ptr, *node = A->node;                            \n"
+    "    double *val = A->val;                                          \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
     "    double z;                                                      \n"
     "                                                                   \n"
@@ -49,11 +52,14 @@ void jitCompileSpecializedBlockMatvec(TCCState *s, char *name, int mc, int nc) {
 
     char line[70];
     char block_matvec_code[30 * 70];
-    strcpy(block_matvec_code, "void ");
+    strcpy(block_matvec_code,
+    "#include \"../include/block_sparse_matrix.h\"                      \n");
+    strcat(block_matvec_code, "void ");
     strcat(block_matvec_code, name);
-    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
-    "                     int *ptr, int *node, double *val,             \n"
-    "                     double *x, double *y) {                       \n"
+    strcat(block_matvec_code,"(BlockSparseMatrix *A, double *x, double *y){\n"
+    "    int m = A->m, mc = A->mc, nc = A->nc;                          \n"
+    "    int *ptr = A->ptr, *node = A->node;                            \n"
+    "    double *val = A->val;                                          \n"
     "    int I, J, K, i, j, M, N, index;                                \n"
     "    double z;                                                      \n"
     "                                                                   \n"
@@ -116,11 +122,14 @@ void jitCompileUnrolledBlockMatvec(TCCState *s, char *name, int mc, int nc) {
     char line[70];
     int k, l;
 
-    strcpy(block_matvec_code, "void ");
+    strcpy(block_matvec_code,
+    "#include \"../include/block_sparse_matrix.h\"                      \n");
+    strcat(block_matvec_code, "void ");
     strcat(block_matvec_code, name);
-    strcat(block_matvec_code, "(int m, int n, int mc, int nc, int nnz,  \n"
-    "                     int *ptr, int *node, double *val,             \n"
-    "                     double *x, double *y) {                       \n"
+    strcat(block_matvec_code, "(BlockSparseMatrix *A, double *x, double *y){\n"
+    "    int m = A->m, mc = A->mc, nc = A->nc;                          \n"
+    "    int *ptr = A->ptr, *node = A->node;                            \n"
+    "    double *val = A->val;                                          \n"
     "    int I, J, K, i, j, k, M, N;                                    \n"
     "    double *v;                                                     \n"
     "                                                                   \n"

@@ -9,11 +9,13 @@
 void jitCompileMatvec(TCCState *s, char *name) {
     char matvec_code[30 * 70];
 
-    strcpy(matvec_code, "void ");
+    strcpy(matvec_code, "#include \"../include/sparse_matrix.h\"            \n");
+    strcat(matvec_code, "void ");
     strcat(matvec_code, name);
-    strcat(matvec_code, "(int m, int n, int nnz,                            \n"
-    "                int *ptr, int *node, double *val,                      \n"
-    "                double *x, double *y) {                                \n"
+    strcat(matvec_code, "(SparseMatrix *A, double *x, double *y) {          \n"
+    "    int m = A->m;                                                      \n"
+    "    int *ptr = A->ptr, *node = A->node;                                \n"
+    "    double *val = A->val;                                              \n"
     "    int i, j, k;                                                       \n"
     "    double z;                                                          \n"
     "                                                                       \n"

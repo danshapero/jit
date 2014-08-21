@@ -4,18 +4,15 @@
 #define BLOCK_SPARSE_MATRIX_H
 
 
-typedef void (*BlockMatvec) (int m, int n, int mc, int nc, int nnz,
-                             int *ptr, int *node, double *val,
-                             double *x, double *y);
-
-struct BlockSparseMatrix_t {
+typedef struct BlockSparseMatrix {
     int m, n, mc, nc, nnz;
     int *ptr, *node;
     double *val;
-    BlockMatvec matvec;
-};
+    void (*matvec) (struct BlockSparseMatrix*, double*, double*);
+} BlockSparseMatrix;
 
-typedef struct BlockSparseMatrix_t BlockSparseMatrix;
+typedef void (*BlockMatvec) (BlockSparseMatrix*, double*, double*);
+
 
 void blockify(BlockSparseMatrix *A, SparseMatrix *B, int mc, int nc);
 void destroyBlockSparseMatrix(BlockSparseMatrix *A);
@@ -27,8 +24,6 @@ double blockSparseMatGetValue(BlockSparseMatrix *A, int i, int j);
 int blockSparseMatGetRowSize(BlockSparseMatrix *A, int i);
 
 void blockSparseMatrixVectorMultiply(BlockSparseMatrix *A, double *x, double *y);
-void native_bcsr_matvec(int m, int n, int mc, int nc, int nnz,
-                        int *ptr, int *node, double *val,
-                        double *x, double *y);
+void native_bcsr_matvec(BlockSparseMatrix *A, double *x, double *y);
 
 #endif
