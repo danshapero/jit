@@ -1,43 +1,62 @@
 from pycparser import c_ast, c_parser
 
 
+class JitFunction(object):
+    def __init__(self, args = None, body = None):
+        self.args = args
+        self.body = body
+
+
+
 class JitSyntaxError(Exception):
     def __init__(self, message):
         self.message = message
 
 
 
-'''class ForLoopVisitor(c_ast.NodeVisitor):
-    def visit_ForLoop(self, node):
-        
-
-
-class FuncDefVisitor(c_ast.NodeVisitor):
-    def visit_FuncDef(self, node):'''
-
-
-
-def extract_jit_function_blocks(text):
+def extract_jit_functions(text):
 
     jit_start = text.find("@JIT")
-    jit_function_blocks = []
+    jit_functions = []
 
     while(jit_start != -1):
-        func_body_start = text.find("{{", jit_start)
-        func_body_end   = text.find("}}", jit_start)
+        # Find where the C function to be JIT compiled begins and ends. This
+        # is denoted by double curly braces. Better hope those don't appear
+        # in comments somewhere or we're really screwed.
+        body_start = text.find("{{", jit_start)
+        body_end   = text.find("}}", jit_start)
 
-        if func_body_start == -1 or func_body_end == -1:
+        if body_start == -1 or body_end == -1:
             raise JitSyntaxError(
             "JIT invocation at position {0} lacks delimiters {{, }} to denote"
             "beginning and end of JIT function block.".format(jit_start)
             )
 
-        jit_func_header = text[jit_start : func_body_start]
-        jit_func_body   = text[func_body_start + 2 : func_body_end]
-        jit_function_blocks.append( (jit_func_header, jit_func_body) )
 
-        jit_start = text.find("@JIT", func_body_end + 2)
+        # Find what the arguments are going to be to the JIT compilation 
+        # function and their types.
+        args_start = text.find("(", jit_start)
+        args_end   = text.find(")", jit_start)
+
+        func_header = {}
+        if args_start != -1 and args_end < body_start:
+            args_list = text[args_start + 1, args_end].split(',')
+            for arg_pair in args_list:
+                func_header.insert( arg_pair.split() )
 
 
-    return jit_function_blocks
+        # Make a JitFunction object encapsulating the arguments and content
+        # of the JIT compiled C function.
+        func_header = text[jit_start : body_start]
+        func_body   = text[body_start + 2 : body_end]
+        jit_functions.append( 
+                            JitFunction(args = func_header,
+                                        body = func_body)
+                            )
 
+
+        # Find the next JIT function
+        jit_start = text.find("@JIT", body_end + 2)
+
+
+    return jit_functions
